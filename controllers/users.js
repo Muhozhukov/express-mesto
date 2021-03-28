@@ -2,14 +2,13 @@ const User = require('../models/user');
 
 const errorHandle = (res, req, err) => {
   if (err.name === 'ValidationError') {
-    res.status(400)
+    return res.status(400)
     .send({ message: `${Object.values(err.errors)
       .map((error) => error.message).join(', ')}`});
-    console.log(res.status)
   } else if (err.name === 'CastError') {
     return res.status(404).send({ message: "Запрашиваемый ресурс не найден"});
   } else {
-    res.status(500).send({ message: "Произошла ошибка"})
+    return res.status(500).send({ message: "Произошла ошибка"})
   }
 }
 

@@ -2,15 +2,14 @@ const Card = require('../models/card');
 
 const errorHandle = (res, req, err) => {
   if (err.name === 'ValidationError') {
-    return res.status(400)
+    res.status(400)
       .send({
         message: `${Object.values(err.errors)
           .map((error) => error.message).join(', ')}`,
       });
-  } if (err.name === 'CastError') {
-    return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+  } else {
+    res.status(500).send({ message: 'Произошла ошибка' });
   }
-  return res.status(500).send({ message: 'Произошла ошибка' });
 };
 
 const getCards = (req, res) => {
@@ -23,7 +22,7 @@ const getCards = (req, res) => {
 const createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.send({ card }))
     .catch((err) => {
       errorHandle(res, req, err);
     });
@@ -32,7 +31,12 @@ const createCard = (req, res) => {
 const deleteCard = (req, res) => {
   const { cardId } = req.params;
   Card.findByIdAndRemove(cardId)
-    .then((card) => res.send({ data: card }))
+    .then((card) => {
+      if (!card) {
+        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+      }
+      return res.send({ card });
+    })
     .catch((err) => {
       errorHandle(res, req, err);
     });
@@ -41,7 +45,12 @@ const deleteCard = (req, res) => {
 const likeCard = (req, res) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(cardId, { $addToSet: { likes: req.user._id } }, { new: true })
-    .then((card) => res.send({ card }))
+    .then((card) => {
+      if (!card) {
+        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+      }
+      return res.send({ card });
+    })
     .catch((err) => {
       errorHandle(res, req, err);
     });
@@ -50,7 +59,12 @@ const likeCard = (req, res) => {
 const dislikeCard = (req, res) => {
   const { cardId } = req.params;
   Card.findByIdAndUpdate(cardId, { $pull: { likes: req.user._id } }, { new: true })
-    .then((card) => res.send({ card }))
+    .then((card) => {
+      if (!card) {
+        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+      }
+      return res.send({ card });
+    })
     .catch((err) => {
       errorHandle(res, req, err);
     });

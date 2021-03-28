@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   about: {
     type: String,
+    required: [true, 'Поле обязательно для заполнения'],
     minlength: [2, 'Описание не может быть короче 2 символов'],
     maxlength: [30, 'Описание не может быть длиннее 30 символов'],
   },

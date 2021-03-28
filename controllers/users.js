@@ -26,7 +26,7 @@ const getUserById = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ data: user });
+      return res.send({ user });
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -49,7 +49,7 @@ const changeUserInfo = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ data: user });
+      return res.send({ user });
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -63,7 +63,7 @@ const changeUserAvatar = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ data: user });
+      return res.send({ user });
     })
     .catch((err) => {
       errorHandle(res, req, err);

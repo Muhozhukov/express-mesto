@@ -7,6 +7,8 @@ const errorHandle = (res, req, err) => {
         message: `${Object.values(err.errors)
           .map((error) => error.message).join(', ')}`,
       });
+  } if (err.name === 'CastError') {
+    res.status(400).send({ message: 'Ошибка запроса' });
   } else {
     res.status(500).send({ message: 'Произошла ошибка' });
   }

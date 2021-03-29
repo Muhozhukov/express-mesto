@@ -15,14 +15,14 @@ const errorHandle = (res, req, err) => {
 const getCards = (req, res) => {
   Card.find({})
     .populate('owner')
-    .then((cards) => res.send({ cards }))
+    .then((cards) => res.send(cards))
     .catch(() => res.status(500).send({ message: 'Произошла ощибка' }));
 };
 
 const createCard = (req, res) => {
   const { name, link } = req.body;
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({ card }))
+    .then((card) => res.send(card))
     .catch((err) => {
       errorHandle(res, req, err);
     });
@@ -35,7 +35,7 @@ const deleteCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ card });
+      return res.send(card);
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -49,7 +49,7 @@ const likeCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ card });
+      return res.send(card);
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -63,7 +63,7 @@ const dislikeCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ card });
+      return res.send(card);
     })
     .catch((err) => {
       errorHandle(res, req, err);

@@ -15,7 +15,7 @@ const errorHandle = (res, req, err) => {
 
 const getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.send({ users }))
+    .then((users) => res.send(users))
     .catch(() => res.status(500).send({ message: 'Произошла ощибка' }));
 };
 
@@ -26,7 +26,7 @@ const getUserById = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ user });
+      return res.send(user);
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -36,7 +36,7 @@ const getUserById = (req, res) => {
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
   User.create({ name, about, avatar })
-    .then((user) => res.send({ user }))
+    .then((user) => res.send(user))
     .catch((err) => {
       errorHandle(res, req, err);
     });
@@ -49,7 +49,7 @@ const changeUserInfo = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ user });
+      return res.send(user);
     })
     .catch((err) => {
       errorHandle(res, req, err);
@@ -63,7 +63,7 @@ const changeUserAvatar = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
       }
-      return res.send({ user });
+      return res.send(user);
     })
     .catch((err) => {
       errorHandle(res, req, err);

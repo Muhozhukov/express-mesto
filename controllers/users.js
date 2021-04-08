@@ -1,75 +1,129 @@
-/* eslint-disable consistent-return */
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const NotFoundError = require('../errors/NotFoundErrod');
+const BadRequestError = require('../errors/BadRequestError');
+const ConflictError = require('../errors/ConflictError');
 
-const errorHandle = (res, req, err) => {
+const errorHandle = (err, next) => {
   if (err.name === 'ValidationError') {
-    res.status(400)
-      .send({
-        message: `${Object.values(err.errors)
-          .map((error) => error.message).join(', ')}`,
-      });
+    throw new BadRequestError('Ошибка обработки запроса');
   } if (err.name === 'CastError') {
-    res.status(400).send({ message: 'Ошибка запроса' });
-  } else {
-    res.status(500).send({ message: 'Произошла ошибка' });
+    throw new BadRequestError('Ошибка обработки запроса');
+  } if (err.name === 'MongoError' && err.code === 11000) {
+    throw new ConflictError('Адрес электронной почты уже используется');
   }
+  next(err);
 };
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() => res.status(500).send({ message: 'Произошла ощибка' }));
+    .catch((err) => {
+      errorHandle(err, next);
+    })
+    .catch(next);
 };
 
-const getUserById = (req, res) => {
+const getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Запрашиваемый ресурс не найден');
+      }
+      return res.send(user);
+    })
+    .catch((err) => {
+      errorHandle(err, next);
+    })
+    .catch(next);
+};
+
+const getUserById = (req, res, next) => {
   const { userId } = req.params;
   User.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+        throw new NotFoundError('Запрашиваемый ресурс не найден');
       }
       return res.send(user);
     })
     .catch((err) => {
-      errorHandle(res, req, err);
-    });
+      errorHandle(err, next);
+    })
+    .catch(next);
 };
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send(user))
+const createUser = (req, res, next) => {
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      email,
+      password: hash,
+      name,
+      about,
+      avatar,
+    }))
+    .then((user) => res.send({
+      _id: user._id,
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    }))
     .catch((err) => {
-      errorHandle(res, req, err);
-    });
+      errorHandle(err, next);
+    })
+    .catch(next);
 };
 
-const changeUserInfo = (req, res) => {
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign(
+        { _id: user._id },
+        'secret-key',
+        { expiresIn: '7d' },
+      );
+      res.send({ token });
+    })
+    .catch((err) => {
+      errorHandle(err, next);
+    })
+    .catch(next);
+};
+
+const changeUserInfo = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((user) => {
       if (!user) {
-        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+        throw new NotFoundError('Запрашиваемый ресурс не найден');
       }
       return res.send(user);
     })
     .catch((err) => {
-      errorHandle(res, req, err);
-    });
+      errorHandle(err, next);
+    })
+    .catch(next);
 };
 
-const changeUserAvatar = (req, res) => {
+const changeUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => {
       if (!user) {
-        return res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+        throw new NotFoundError('Запрашиваемый ресурс не найден');
       }
       return res.send(user);
     })
     .catch((err) => {
-      errorHandle(res, req, err);
-    });
+      errorHandle(err, next);
+    })
+    .catch(next);
 };
 
 module.exports = {
@@ -78,4 +132,6 @@ module.exports = {
   createUser,
   changeUserInfo,
   changeUserAvatar,
+  login,
+  getUserInfo,
 };

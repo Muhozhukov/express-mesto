@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -12,7 +13,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Заполни пароль'],
-    minlength: 8,
     select: false,
   },
   name: {
@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
     default: 'Жак-Ив Кусто',
     minlength: [2, 'Имя не может быть короче 2 символов'],
     maxlength: 30,
-    validate: {
-      validator: (v) => /[А-ЯЁ][а-яэ]+/.test(v),
-      message: 'Имя должно быть на русском и начинаться с большой буквы',
-    },
   },
   about: {
     type: String,
@@ -35,25 +31,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator: (v) => /(?:(?:https?|ftp|file):\/\/|www\.|ftp\.)(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[-A-Z0-9+&@#/%=~_|$?!:,.])*(?:\([-A-Z0-9+&@#/%=~_|$?!:,.]*\)|[A-Z0-9+&@#/%=~_|$])/igm.test(v),
-      message: 'Имя должно быть на русском и начинаться с большой буквы',
+      message: 'Невалидная ссылка на изображение',
     },
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
   },
 });
 // eslint-disable-next-line func-names
-userSchema.statics.findUserByCredentials = function (email, password) {
+userSchema.statics.findUserByCredentials = function (email, password, next) {
   return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        throw new UnauthorizedError('Неправильные почта или пароль');
       }
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            throw new UnauthorizedError('Неправильные почта или пароль');
           }
           return user;
-        });
+        })
+        .catch(next);
     });
 };
 
